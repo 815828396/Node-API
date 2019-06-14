@@ -2,6 +2,13 @@ doctype html
 html
   head
     title= title
+    meta(charset="utf-8")
     link(rel='stylesheet', href='/stylesheets/style.css')
+    if (title === 'index')
+      link(rel='stylesheet', href='/stylesheets/index.css')
+    if (title === 'user')
+      link(rel='stylesheet', href='/stylesheets/user.css')
+    if (title === 'login')
+      link(rel='stylesheet', href='/stylesheets/login.css')
   body
     block content

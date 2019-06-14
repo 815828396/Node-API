@@ -1,5 +1,11 @@
 extends layout
 
 block content
-  h1= title
-  p Welcome to #{title}
+  p Welcome to #{ title }
+  div.link-group
+    a(href="https://www.baidu.com") 百度
+    a(href="error") 测试
+    a(href="error") #{ url }
+  ul.user-list
+    each item, i in userName
+      li #{ item }: #{ i }
