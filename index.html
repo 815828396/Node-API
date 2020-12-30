@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title></title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Document</title>
+	<link rel='stylesheet' href='/stylesheets/style.css' />
+	<style>
+		body {
+			padding-bottom: 40px;
+		}
+
+		input {
+			height: 40px;
+			width: 300px;
+			padding-left: 30px;
+			background: #f1f1f1;
+			border: 1px solid #ccc;
+			outline: none;
+		}
+
+		#msg {
+			display: flex;
+			flex-direction: column;
+			padding: 0 30px;
+			margin-top: 30px;
+		}
+
+		#msg>div {
+			margin-bottom: 10px;
+		}
+		#msg>div .content-item {
+			display: inline-block;
+			padding: 10px 20px;
+			line-height: 25px;
+			border-radius: 20px 20px 20px 0;
+		}
+		#msg > div .content-item span:first-child {
+			float: left;
+		}
+		#msg > div .content-item span:last-child {
+			max-width: 300px;
+			float: left;
+		}
+
+		#msg>div img {
+			margin-left: 20px;
+		}
+
+
+		#msg .content-item.ccc {
+			background: #f1f1f1;
+		}
+
+		#msg .content-item.yellow {
+			background: #79794d;
+			color: #fff;
+		}
+
+		#msg .content-item.green {
+			background: green;
+			color: #fff;
+		}
+
+		#msg .content-item.blue {
+			background: #4883f1;
+			color: #fff;
+		}
+
+		.bottom-input {
+			position: fixed;
+			bottom: 0;
+			width: 100%;
+			background: #f1f1f1;
+			padding: 30px 0;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+
+		.clientNoteBtn {
+			background: #4883f1;
+			color: #fff;
+			padding: 10px 20px;
+			border: none;
+			outline: none;
+		}
+
+		#clientNote.green {
+			color: green;
+		}
+
+		#clientNote.red {
+			color: red;
+		}
+	</style>
+</head>
+
+<body>
+	<h1>在线人数：<text id='person'>0</text>人</h1>
+	<div>
+		<button onclick="noteNotification()" class='clientNoteBtn'>接受消息通知</button>
+		<!-- <button onclick="shownoteNotification()" class='clientNoteBtn'>弹出消息通知</button> -->
+		<span id="clientNote"></span>
+	</div>
+	<br>
+	<div class='bottom-input'>
+		<text>输入内容：</text>
+		<input type="text" id="sendtext">
+		<input type="text" id="imgSrc" placeholder="放入网络图片连接" style="margin-left: 20px;width: 100px">
+		<button onclick="clearHtml()">清空内容</button>
+		<!-- <text>回车发送</text> -->
+	</div>
+	<div>帅逼们的谈话内容：</div>
+	<div id="msg"></div>
+	<script>
+		const ws = new WebSocket("ws://192.168.101.26:3000/") // 监听地址端口号
+		const content = document.getElementById('msg');
+		const person = document.getElementById('person');
+		const Input = document.getElementById("sendtext");
+		const ImgSrc = document.getElementById("imgSrc");
+		let isBlurDocument = false;
+		ws.onopen = function () {
+			console.log("client: 服务器已连接")
+		}
+		ws.onmessage = (msg) => {
+			// console.log(msg.data);
+			const { content: html = '', len, cl = '', src = "", userName } = JSON.parse(msg.data);
+
+			const _content = `
+				<div class="content-item ${cl}">
+					<span>${userName}：</span>
+					<span>${html}</span>
+				</div>
+			`;
+			const htmls = src ? `
+				<div>
+					${_content}
+					<img src="${ src}" alt="图片找不到" width="100" height="100" />
+				</div>
+			` : `<div>${_content}</div>`;
+			person.innerHTML = len;
+			if (userName) {
+				
+				content.innerHTML = htmls + content.innerHTML;
+				console.log(isBlurDocument);
+				isBlurDocument && shownoteNotification(userName, html);
+			}
+		}
+
+		window.onfocus = function () {
+			document.title = '【呸】'
+			isBlurDocument = false;
+		};
+		window.onblur = function () {
+			isBlurDocument = true;
+			document.title = '【快回来聊天】'
+		};
+
+		// // for IE
+		// document.onfocusin = function () {
+		// 	isShine = false;
+		// };
+		// document.onfocusout = function () {
+		// 	isShine = true;
+		// };
+
+		ws.onclose = () => {
+			console.log("服务器关闭")
+		}
+		function send() {
+			let value = Input.value;
+			let src = ImgSrc.value;
+
+			if (!value && !src) {
+				alert('你输入内容或者发送图片啊！我呸');
+				return;
+			}
+			ws.send(JSON.stringify({ value, src }));
+			Input.value = '';
+			ImgSrc.value = '';
+		}
+		function clearHtml() {
+			content.innerHTML = '';
+		}
+		document.onkeydown = function (event) {
+			var e = event || window.event;
+			if (e && e.keyCode == 13) { //回车键的键值为13
+				send();
+			}
+		};
+
+
+		// 浏览器消息通知
+		function noteNotification() {
+			const noti = window.Notification && window.Notification || '';
+			if (!noti) return;
+			noti.requestPermission()
+				.then(res => {
+					console.log(res);
+					const clientNote = document.getElementById('clientNote');
+					// 拒绝
+					if (res === 'denied') {
+						clientNote.className = 'red';
+						clientNote.innerText = '你拒绝了消息提醒，呸';
+					}
+					// 同意
+					else if (res === 'granted') {
+						clientNote.className = 'green';
+						clientNote.innerText = '你同意了消息提醒，啊呸';
+					}
+				})
+				.catch(err => {
+					console.log(err);
+				})
+		}
+		// 弹出消息提醒
+		function shownoteNotification(name, msg) {
+			if (Notification.permission === 'granted') {
+				var notification = new Notification(`hi ${ name } 说`, {
+					body: msg
+				});
+
+				notification.onclick = function () {
+					notification.close();
+				};
+			}
+		}
+	</script>
+</body>
+
+</html>

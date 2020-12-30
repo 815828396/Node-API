@@ -5,10 +5,12 @@
 import url from 'url';
 import token from '../../../token/token.js';
 // HOST 白名单
-const URLwhtieLIst = [
+const URLWhiteList = [
   'xieyingwangluo',
   'localhost:3000',
-  'localhost:8080'
+  'localhost:8000',
+  '192.168.101.26:8000',
+  '192.168.101.26:3000'
 ];
 console.log(token);
 class Interceptor {
@@ -29,9 +31,9 @@ class Interceptor {
         res.sendStatus(200);
         return;
       }
-      
+
       // 当前访问 HOST 存在白名单中, 继续请求操作
-      if ( URLwhtieLIst.indexOf(host) >= 0 ) {
+      if ( URLWhiteList.indexOf(host) >= 0 ) {
         next()
         return;
       }

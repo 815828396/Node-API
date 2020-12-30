@@ -38,6 +38,7 @@ fetch.post = async (path, data = {}) => {
 /**
  * @name http 处理封装
  * @param {String} path 请求地址
+ * @param {Object} data 参数
  * @param {String} method 请求方法
  */
 function _http({

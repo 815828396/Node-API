@@ -2,9 +2,13 @@
 /**
 * @name 相关用户路由
 */
+
 import consturUser from '../../../constructor/c_user/constur_user.js'
 import consturInfo from '../../../constructor/c_user/constur_info.js'
-import Token from '../../../token/token'
+import Token from '../../../token/token';
+var redis = require('redis');
+const redisClient = redis.createClient(6379, 'localhost');
+
 var express = require('express');
 var router = express.Router();
 // 查询兼职
@@ -25,14 +29,29 @@ router.post('/deleteUser', consturInfo.deleteUserInfo);
 // Api-admin: 用户登录-
 router.post('/login', consturUser.checkLogin)
 
-// 无数据库调用接口
-router.get('/nodatabase', function (request, response, next) {
+// 无数据库调用接口Redis  设置readis缓存值
+router.get('/setRedisData', function (request, response, next) {
+  redisClient.set('redisData', '这是第一次设置redis数据');
+  redisClient.set('arrList', JSON.stringify([1,23,4]));
   response.send({
     code: 1,
     message: '获取新闻列表成功',
+    redis,
     result: [{a: 1, b: 2}, {c: 3, d: 4}]
   })
-
+})
+// 获取redis  缓存
+router.get('/getRedisData', function (request, response, next) {
+  redisClient.get('arrList', (err, value) => {
+    console.log(value);
+    if (!value) value = '没有缓存到 key: redisData 的值，需要查询数据库';
+    response.send({
+      code: 1,
+      message: '获取新闻列表成功',
+      value,
+      result: [{a: 1, b: 2}, {c: 3, d: 4}]
+    });
+  });
 })
 // 路由中间件测试 检测token 是否存在
 function routerMiddleFn ( req, res, next ) {
